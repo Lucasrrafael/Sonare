@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Logs and outputs
+*.log
+logs/
+runs/
+wandb/
+
+# YOLO specific
+*.pt           # Trained model weights
+*.onnx         # Exported models
+*.engine       # TensorRT engine files
+*.tflite       # TensorFlow Lite models
+*.torchscript  # Torchscript exports
+*.mlmodel      # CoreML exports
+*.xml          # OpenVINO exports
+*.bin
+
+# Datasets
+datasets/
+data/
+*.zip
+*.tar
+*.gz
+
+# Cache
+*.cache
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.pid
+*.log
