@@ -54,3 +54,13 @@ Thumbs.db
 # Docker
 *.pid
 *.log
+
+# PyTorch
+*.pt
+*.onnx
+*.engine
+*.tflite
+*.torchscript
+*.mlmodel
+*.xml
+*.bin
