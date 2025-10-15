@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from typing import Optional, Tuple
+import json
 
 
 class YOLODetector:
@@ -150,14 +151,28 @@ def load_json_file(file_path: str) -> dict:
     with open(file_path, 'r') as file:
         return json.load(file)
 
-def get_object_info(frame: np.ndarray, detector: YOLODetector, json_file: dict) -> Optional[dict]:
+def get_object_info(frame: np.ndarray, detector: YOLODetector, json_file) -> Optional[dict]:
     """
-    Obtém informações do objeto detectado.
+    Obtém informações do objeto detectado usando a maior detecção (maior área).
+    Funciona tanto para mapeamentos (dict) quanto para listas, onde o índice
+    corresponde ao class_id do modelo.
     
     Args:
         frame (np.ndarray): Frame de entrada
         detector (YOLODetector): Instância do detector YOLO
-        json_file (dict): Arquivo JSON com as informações dos objetos
+        json_file: Estrutura com informações dos objetos (dict ou list)
     """
     class_id = detector.get_largest_object_class(frame)
-    return json_file.get(class_id)
+    if class_id is None:
+        return None
+    
+    # Suporta dict {class_id: obj} e list [obj_0, obj_1, ...]
+    if isinstance(json_file, dict):
+        # Suporta chaves inteiras ou strings ("0", "1", ...)
+        if class_id in json_file:
+            return json_file.get(class_id)
+        return json_file.get(str(class_id))
+    if isinstance(json_file, list):
+        return json_file[class_id] if 0 <= class_id < len(json_file) else None
+    
+    return None
