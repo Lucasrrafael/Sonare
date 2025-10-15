@@ -49,7 +49,18 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+.cursor/
 
 # Docker
 *.pid
 *.log
+
+# PyTorch
+*.pt
+*.onnx
+*.engine
+*.tflite
+*.torchscript
+*.mlmodel
+*.xml
+*.bin
