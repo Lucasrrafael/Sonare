@@ -6,13 +6,47 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 import os
-from product_manager import ProductManager
+import json
+
+# Definir fonte padrão que suporta acentos
+DEFAULT_FONT = ('DejaVu Sans', 10)
+DEFAULT_FONT_BOLD = ('DejaVu Sans', 10, 'bold')
+DEFAULT_FONT_LARGE = ('DejaVu Sans', 14)
+DEFAULT_FONT_LARGE_BOLD = ('DejaVu Sans', 14, 'bold')
+DEFAULT_FONT_TITLE = ('DejaVu Sans', 20, 'bold')
+
+def get_products():
+    """Obtém os produtos cadastrados""" 
+    import os
+    # Caminho relativo ao diretório atual
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Subir um nível para chegar ao diretório raiz do projeto
+    project_root = os.path.dirname(current_dir)
+    products_path = os.path.join(project_root, 'resources', 'products', 'products.json')
+    
+    try:
+        with open(products_path, 'r') as file:
+            data = json.load(file)
+            # Se for dict indexado por class_id, converter para lista ordenada
+            if isinstance(data, dict):
+                try:
+                    # Ordena por chave numérica
+                    ordered_items = sorted(
+                        ((int(k), v) for k, v in data.items()), key=lambda x: x[0]
+                    )
+                    return [v for _, v in ordered_items]
+                except Exception:
+                    # Fallback: apenas valores
+                    return list(data.values())
+            return data
+    except FileNotFoundError:
+        # Se o arquivo não existir, retornar lista vazia
+        return []
 
 class ProductSelector:
     def __init__(self, parent_window, on_product_selected=None):
         self.parent = parent_window
         self.on_product_selected = on_product_selected
-        self.product_manager = ProductManager()
         
         self.create_selector_window()
     
@@ -20,14 +54,14 @@ class ProductSelector:
         """Cria a janela de seleção de produtos"""
         self.selector_window = tk.Toplevel(self.parent)
         self.selector_window.title("Selecionar Produto")
-        self.selector_window.geometry("800x600")
+        self.selector_window.geometry("900x700")
         self.selector_window.configure(bg='#2c3e50')
         
         # Título
         title_label = tk.Label(
             self.selector_window,
             text="Selecionar Produto",
-            font=('Arial', 20, 'bold'),
+            font=DEFAULT_FONT_TITLE,
             fg='white',
             bg='#2c3e50'
         )
@@ -37,26 +71,11 @@ class ProductSelector:
         action_frame = tk.Frame(self.selector_window, bg='#2c3e50')
         action_frame.pack(pady=10)
         
-        # Botão para adicionar produto
-        add_button = tk.Button(
-            action_frame,
-            text="ADICIONAR PRODUTO",
-            font=('Arial', 12, 'bold'),
-            bg='#27ae60',
-            fg='white',
-            padx=20,
-            pady=10,
-            command=self.open_add_product_dialog,
-            relief='flat',
-            cursor='hand2'
-        )
-        add_button.pack(side='left', padx=10)
-        
         # Botão para recarregar
         reload_button = tk.Button(
             action_frame,
             text="RECARREGAR",
-            font=('Arial', 12, 'bold'),
+            font=DEFAULT_FONT_BOLD,
             bg='#3498db',
             fg='white',
             padx=20,
@@ -80,14 +99,14 @@ class ProductSelector:
         for widget in self.products_frame.winfo_children():
             widget.destroy()
         
-        products = self.product_manager.get_products()
+        products = get_products()
         
         if not products:
             # Mostrar mensagem se não há produtos
             no_products_label = tk.Label(
                 self.products_frame,
                 text="Nenhum produto cadastrado.\nClique em 'ADICIONAR PRODUTO' para começar.",
-                font=('Arial', 14),
+                font=DEFAULT_FONT_LARGE,
                 fg='#bdc3c7',
                 bg='#2c3e50',
                 justify='center'
@@ -109,48 +128,84 @@ class ProductSelector:
             self.products_frame,
             bg='#34495e',
             relief='raised',
-            bd=2
+            bd=2,
+            width=300,
+            height=400
         )
         product_frame.grid(row=row, column=col, padx=10, pady=10, sticky='nsew')
+        product_frame.grid_propagate(False)  # Manter tamanho fixo
         
         # Configurar grid
         self.products_frame.grid_rowconfigure(row, weight=1)
         self.products_frame.grid_columnconfigure(col, weight=1)
         
+        # Imagem do produto
+        try:
+            # Caminho relativo ao diretório atual
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            img_path = os.path.join(project_root, product["img_path"])
+            
+            # Carregar e redimensionar imagem
+            img = Image.open(img_path)
+            img = img.resize((80, 80), Image.Resampling.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            
+            # Label para imagem
+            img_label = tk.Label(
+                product_frame,
+                image=photo,
+                bg='#34495e'
+            )
+            img_label.image = photo  # Manter referência
+            img_label.pack(pady=5)
+        except Exception as e:
+            print(f"Erro ao carregar imagem {product['img_path']}: {e}")
+            # Label de erro se imagem não carregar
+            error_label = tk.Label(
+                product_frame,
+                text="Imagem não encontrada",
+                font=DEFAULT_FONT,
+                fg='#e74c3c',
+                bg='#34495e'
+            )
+            error_label.pack(pady=10)
+        
         # Nome do produto
         name_label = tk.Label(
             product_frame,
             text=product["name"],
-            font=('Arial', 14, 'bold'),
+            font=DEFAULT_FONT_LARGE_BOLD,
             fg='white',
-            bg='#34495e'
+            bg='#34495e',
+            wraplength=250
         )
-        name_label.pack(pady=10)
+        name_label.pack(pady=2)
         
         # Preço
         price_label = tk.Label(
             product_frame,
             text=product["price"],
-            font=('Arial', 12),
+            font=DEFAULT_FONT_LARGE,
             fg='#f39c12',
             bg='#34495e'
         )
-        price_label.pack(pady=5)
+        price_label.pack(pady=2)
         
         # Botão selecionar
         select_button = tk.Button(
             product_frame,
             text="SELECIONAR",
-            font=('Arial', 12, 'bold'),
+            font=DEFAULT_FONT_BOLD,
             bg='#27ae60',
             fg='white',
-            padx=20,
-            pady=10,
+            padx=15,
+            pady=8,
             command=lambda p=product: self.select_product(p),
             relief='flat',
             cursor='hand2'
         )
-        select_button.pack(pady=10)
+        select_button.pack(pady=5)
     
     def select_product(self, product):
         """Seleciona um produto"""
@@ -159,188 +214,3 @@ class ProductSelector:
         
         self.selector_window.destroy()
     
-    def open_add_product_dialog(self):
-        """Abre diálogo para adicionar produto"""
-        dialog = AddProductDialog(self.selector_window, self.product_manager)
-        self.selector_window.wait_window(dialog.dialog)
-        self.load_products()  # Recarregar lista após adicionar
-
-class AddProductDialog:
-    def __init__(self, parent, product_manager):
-        self.parent = parent
-        self.product_manager = product_manager
-        self.selected_image_path = None
-        
-        self.create_dialog()
-    
-    def create_dialog(self):
-        """Cria o diálogo de adicionar produto"""
-        self.dialog = tk.Toplevel(self.parent)
-        self.dialog.title("Adicionar Produto")
-        self.dialog.geometry("500x400")
-        self.dialog.configure(bg='#2c3e50')
-        self.dialog.transient(self.parent)
-        self.dialog.grab_set()
-        
-        # Centralizar na tela
-        self.dialog.geometry("+%d+%d" % (self.parent.winfo_rootx() + 50, self.parent.winfo_rooty() + 50))
-        
-        # Título
-        title_label = tk.Label(
-            self.dialog,
-            text="Adicionar Novo Produto",
-            font=('Arial', 18, 'bold'),
-            fg='white',
-            bg='#2c3e50'
-        )
-        title_label.pack(pady=20)
-        
-        # Frame principal
-        main_frame = tk.Frame(self.dialog, bg='#2c3e50')
-        main_frame.pack(pady=20, padx=30, fill='both', expand=True)
-        
-        # Nome do produto
-        name_label = tk.Label(
-            main_frame,
-            text="Nome do Produto:",
-            font=('Arial', 12, 'bold'),
-            fg='white',
-            bg='#2c3e50'
-        )
-        name_label.pack(anchor='w', pady=(0, 5))
-        
-        self.name_entry = tk.Entry(
-            main_frame,
-            font=('Arial', 12),
-            width=40
-        )
-        self.name_entry.pack(pady=(0, 15))
-        
-        # Preço
-        price_label = tk.Label(
-            main_frame,
-            text="Preço:",
-            font=('Arial', 12, 'bold'),
-            fg='white',
-            bg='#2c3e50'
-        )
-        price_label.pack(anchor='w', pady=(0, 5))
-        
-        self.price_entry = tk.Entry(
-            main_frame,
-            font=('Arial', 12),
-            width=40
-        )
-        self.price_entry.pack(pady=(0, 15))
-        
-        # Imagem
-        image_label = tk.Label(
-            main_frame,
-            text="Imagem do Produto:",
-            font=('Arial', 12, 'bold'),
-            fg='white',
-            bg='#2c3e50'
-        )
-        image_label.pack(anchor='w', pady=(0, 5))
-        
-        # Frame para seleção de imagem
-        image_frame = tk.Frame(main_frame, bg='#2c3e50')
-        image_frame.pack(fill='x', pady=(0, 15))
-        
-        self.image_path_label = tk.Label(
-            image_frame,
-            text="Nenhuma imagem selecionada",
-            font=('Arial', 10),
-            fg='#bdc3c7',
-            bg='#2c3e50'
-        )
-        self.image_path_label.pack(side='left', fill='x', expand=True)
-        
-        select_image_button = tk.Button(
-            image_frame,
-            text="SELECIONAR",
-            font=('Arial', 10, 'bold'),
-            bg='#3498db',
-            fg='white',
-            padx=15,
-            pady=5,
-            command=self.select_image,
-            relief='flat',
-            cursor='hand2'
-        )
-        select_image_button.pack(side='right')
-        
-        # Botões
-        buttons_frame = tk.Frame(main_frame, bg='#2c3e50')
-        buttons_frame.pack(pady=20)
-        
-        save_button = tk.Button(
-            buttons_frame,
-            text="SALVAR",
-            font=('Arial', 12, 'bold'),
-            bg='#27ae60',
-            fg='white',
-            padx=30,
-            pady=10,
-            command=self.save_product,
-            relief='flat',
-            cursor='hand2'
-        )
-        save_button.pack(side='left', padx=10)
-        
-        cancel_button = tk.Button(
-            buttons_frame,
-            text="CANCELAR",
-            font=('Arial', 12, 'bold'),
-            bg='#e74c3c',
-            fg='white',
-            padx=30,
-            pady=10,
-            command=self.dialog.destroy,
-            relief='flat',
-            cursor='hand2'
-        )
-        cancel_button.pack(side='left', padx=10)
-    
-    def select_image(self):
-        """Seleciona imagem do produto"""
-        file_path = filedialog.askopenfilename(
-            title="Selecionar Imagem do Produto",
-            filetypes=[
-                ("Imagens", "*.png *.jpg *.jpeg *.gif *.bmp"),
-                ("PNG", "*.png"),
-                ("JPEG", "*.jpg *.jpeg"),
-                ("Todos os arquivos", "*.*")
-            ]
-        )
-        
-        if file_path:
-            self.selected_image_path = file_path
-            filename = os.path.basename(file_path)
-            self.image_path_label.config(text=f"Imagem: {filename}")
-    
-    def save_product(self):
-        """Salva o produto"""
-        name = self.name_entry.get().strip()
-        price = self.price_entry.get().strip()
-        
-        if not name:
-            messagebox.showerror("Erro", "Por favor, digite o nome do produto.")
-            return
-        
-        if not price:
-            messagebox.showerror("Erro", "Por favor, digite o preço do produto.")
-            return
-        
-        if not self.selected_image_path:
-            messagebox.showerror("Erro", "Por favor, selecione uma imagem para o produto.")
-            return
-        
-        # Adicionar produto
-        success = self.product_manager.add_product(name, price, self.selected_image_path)
-        
-        if success:
-            messagebox.showinfo("Sucesso", f"Produto '{name}' adicionado com sucesso!")
-            self.dialog.destroy()
-        else:
-            messagebox.showerror("Erro", "Erro ao adicionar produto. Verifique os dados e tente novamente.")
