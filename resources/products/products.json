@@ -1,0 +1,68 @@
+{
+  "0": {
+    "name": "Atum em Lata",
+    "price": "R$ 7,00",
+    "img_path": "resources/images/atum.png",
+    "tts": "Atum em lata, sete reais"
+  },
+  "1": {
+    "name": "Bolo de Caixa",
+    "price": "R$ 12,00",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Bolo de caixa, doze reais"
+  },
+  "2": {
+    "name": "Café",
+    "price": "R$ 8,00",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Café, oito reais"
+  },
+  "3": {
+    "name": "Chá",
+    "price": "R$ 6,00",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Chá, seis reais"
+  },
+  "4": {
+    "name": "Geleia",
+    "price": "R$ 9,00",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Geleia, nove reais"
+  },
+  "5": {
+    "name": "Leite de Caixa",
+    "price": "R$ 5,50",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Leite de caixa, cinco reais e cinquenta"
+  },
+  "6": {
+    "name": "Macarrão",
+    "price": "R$ 4,50",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Macarrão, quatro reais e cinquenta"
+  },
+  "7": {
+    "name": "Molho de Tomate",
+    "price": "R$ 4,00",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Molho de tomate, quatro reais"
+  },
+  "8": {
+    "name": "Óleo de Cozinha",
+    "price": "R$ 9,50",
+    "img_path": "resources/images/oleodecozinha2.png",
+    "tts": "Óleo de cozinha, nove reais e cinquenta"
+  },
+  "9": {
+    "name": "Coca-Cola",
+    "price": "R$ 10,00",
+    "img_path": "resources/images/cocacola-2litros.png",
+    "tts": "Coca-Cola, dez reais"
+  },
+  "10": {
+    "name": "Suco",
+    "price": "R$ 7,50",
+    "img_path": "resources/images/placeholder.jpg",
+    "tts": "Suco, sete reais e cinquenta"
+  }
+}
