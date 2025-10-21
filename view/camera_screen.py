@@ -165,22 +165,15 @@ class CameraScreen:
             self.is_playing_audio = False
     
     def maximize_camera_window(self):
-        """Maximiza a janela da câmera de forma compatível com Linux e Windows"""
-        system = platform.system()
+        """Maximiza a janela da câmera em tela cheia sem barras"""
+        # Remover decorações da janela para tela cheia
+        self.camera_window.overrideredirect(True)
         
-        if system == "Windows":
-            # Windows: usar state('zoomed')
-            self.camera_window.state('zoomed')
-        elif system == "Linux":
-            # Linux: usar attributes('-zoomed', True)
-            self.camera_window.attributes('-zoomed', True)
-        else:
-            # macOS ou outros sistemas: tentar maximizar
-            try:
-                self.camera_window.attributes('-zoomed', True)
-            except:
-                # Fallback: definir tamanho da tela
-                self.camera_window.geometry(f"{self.camera_window.winfo_screenwidth()}x{self.camera_window.winfo_screenheight()}+0+0")
+        # Configurar tela cheia
+        self.camera_window.geometry(f"{self.camera_window.winfo_screenwidth()}x{self.camera_window.winfo_screenheight()}+0+0")
+        
+        # Configurar para ficar sempre no topo
+        self.camera_window.attributes('-topmost', True)
     
     def create_camera_window(self):
         """Cria a janela da câmera"""
@@ -328,6 +321,11 @@ class CameraScreen:
         
         # Configurar fechamento da janela
         self.camera_window.protocol("WM_DELETE_WINDOW", self.close_camera)
+        
+        # Configurar teclas para voltar à tela inicial
+        self.camera_window.bind('<Escape>', lambda e: self.close_camera())
+        self.camera_window.bind('<F4>', lambda e: self.close_camera())
+        self.camera_window.bind('<F12>', lambda e: self.close_camera())
         
         # Iniciar câmera automaticamente
         self.start_camera()
@@ -645,7 +643,12 @@ class CameraScreen:
         except:
             pass
         
-        self.camera_window.destroy()
+        # Se a janela pai tem método return_to_main, chamar ele
+        if hasattr(self.parent, 'return_to_main'):
+            self.parent.return_to_main()
+        else:
+            # Fallback: apenas fechar a janela
+            self.camera_window.destroy()
     
     def __del__(self):
         """Destrutor"""
