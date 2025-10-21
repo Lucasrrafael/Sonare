@@ -75,11 +75,11 @@ class MainApp:
             print("Imagem não foi carregada, usando background azul")
             self.canvas.configure(bg='#2c3e50')
         
-        # Relógio no canto superior esquerdo
+        # Relógio no canto superior esquerdo (estilo da imagem)
         self.clock_label = self.canvas.create_text(
-            50, 50,
+            110, 150,
             text="10:45",
-            font=('DejaVu Sans', 60, 'bold'),
+            font=('Outfit', 160, 'bold'),
             fill='white',
             anchor='nw'
         )
