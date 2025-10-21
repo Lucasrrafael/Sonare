@@ -2,10 +2,18 @@
 Aplicação principal - ponto de entrada do sistema
 """
 
+import sys
+import os
 import tkinter as tk
 import platform
 import json
 import argparse
+
+# Adicionar a raiz do projeto ao PYTHONPATH
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from camera_screen import CameraScreen
 
 # Definir fonte padrão que suporta acentos
