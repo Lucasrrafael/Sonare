@@ -10,6 +10,7 @@ import platform
 import json
 import argparse
 from PIL import Image, ImageTk
+import glob
 
 # Adicionar a raiz do projeto ao PYTHONPATH
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -56,24 +57,23 @@ class MainApp:
     
     def setup_ui(self):
         """Configura a interface inicial"""
-        # Carregar imagem como background
-        self.load_background_image()
-        
         # Canvas para sobrepor elementos
         self.canvas = Canvas(
             self.root,
             highlightthickness=0,
-            bg='white'  # Background temporário
+            bg='#2c3e50'  # Background temporário
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
-        # Adicionar imagem como background se carregada
-        if hasattr(self, 'background_photo') and self.background_photo:
-            self.background_item = self.canvas.create_image(0, 0, image=self.background_photo, anchor='nw')
-            print("Imagem carregada como background!")
+        # Carregar e iniciar carrossel de backgrounds
+        self.load_carousel_backgrounds()
+        
+        # Adicionar primeira imagem como background se carregada
+        if hasattr(self, 'background_images') and self.background_images:
+            self.background_item = self.canvas.create_image(0, 0, image=self.background_images[0], anchor='nw')
+            print("Primeira imagem carregada como background!")
         else:
-            print("Imagem não foi carregada, usando background azul")
-            self.canvas.configure(bg='#2c3e50')
+            print("Nenhuma imagem carregada, usando background azul")
         
         # Relógio no canto superior esquerdo (estilo da imagem)
         self.clock_label = self.canvas.create_text(
@@ -94,37 +94,9 @@ class MainApp:
         
         # Iniciar atualização do relógio
         self.update_clock()
-    
-    def load_background_image(self):
-        """Carrega a imagem JPG como background"""
-        try:
-            # Caminho para a imagem JPG
-            img_path = os.path.join(project_root, 'view', 'assets', 'Frame 444_page-0001.jpg')
-            print(f"Tentando carregar imagem: {img_path}")
-            print(f"Arquivo existe: {os.path.exists(img_path)}")
-            
-            if os.path.exists(img_path):
-                print("Carregando imagem JPG...")
-                # Carregar imagem diretamente
-                img = Image.open(img_path)
-                
-                print("Imagem carregada com sucesso!")
-                # Redimensionar para a tela
-                screen_width = self.root.winfo_screenwidth()
-                screen_height = self.root.winfo_screenheight()
-                print(f"Redimensionando para: {screen_width}x{screen_height}")
-                
-                self.background_image = img.resize((screen_width, screen_height), Image.Resampling.LANCZOS)
-                self.background_photo = ImageTk.PhotoImage(self.background_image)
-                print("Imagem carregada e convertida para PhotoImage!")
-            else:
-                print(f"Arquivo de imagem não encontrado: {img_path}")
-                self.background_photo = None
-        except Exception as e:
-            print(f"Erro ao carregar imagem: {e}")
-            import traceback
-            traceback.print_exc()
-            self.background_photo = None
+        
+        # Iniciar carrossel de backgrounds
+        self.start_background_carousel()
     
     def update_clock(self):
         """Atualiza o relógio a cada segundo"""
@@ -133,6 +105,75 @@ class MainApp:
         self.canvas.itemconfig(self.clock_label, text=current_time)
         # Agendar próxima atualização em 1 segundo
         self.root.after(1000, self.update_clock)
+    
+    def load_carousel_backgrounds(self):
+        """Carrega todas as imagens da pasta assets como backgrounds"""
+        try:
+            # Buscar todas as imagens PNG e JPG
+            assets_dir = os.path.join(project_root, 'view', 'assets')
+            png_files = glob.glob(os.path.join(assets_dir, '*.png'))
+            jpg_files = glob.glob(os.path.join(assets_dir, '*.jpg'))
+            
+            # Combinar todas as imagens
+            all_files = sorted(png_files + jpg_files)
+            
+            print(f"Encontradas {len(all_files)} imagens para o carrossel de backgrounds")
+            
+            self.background_images = []
+            self.background_photos = []
+            
+            # Obter dimensões da tela
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            
+            for img_file in all_files:
+                try:
+                    img = Image.open(img_file)
+                    # Redimensionar para o tamanho da tela
+                    img_resized = img.resize((screen_width, screen_height), Image.Resampling.LANCZOS)
+                    photo = ImageTk.PhotoImage(img_resized)
+                    self.background_photos.append(photo)
+                    self.background_images.append(photo)
+                    print(f"Carregada como background: {os.path.basename(img_file)}")
+                except Exception as e:
+                    print(f"Erro ao carregar {img_file}: {e}")
+            
+            # Variáveis para controle do carrossel
+            self.current_bg_index = 0
+            self.bg_animation_offset = 0
+            self.bg_animation_speed = 30  # Pixels por frame (começa rápido)
+            self.bg_is_animating = False
+            
+        except Exception as e:
+            print(f"Erro ao carregar imagens do carrossel: {e}")
+            self.background_images = []
+    
+    def start_background_carousel(self):
+        """Inicia o carrossel de backgrounds"""
+        if not self.background_images:
+            return
+        
+        # Agendar primeira troca após 3 segundos
+        self.root.after(3000, self.change_background)
+    
+    def change_background(self):
+        """Muda para o próximo background com animação"""
+        if not self.background_images:
+            return
+        
+        # Próximo índice
+        self.current_bg_index = (self.current_bg_index + 1) % len(self.background_images)
+        
+        # Atualizar background com fade/transição suave
+        self.canvas.itemconfig(
+            self.background_item,
+            image=self.background_images[self.current_bg_index]
+        )
+        
+        print(f"Background alterado para índice {self.current_bg_index}")
+        
+        # Agendar próxima troca após 3 segundos
+        self.root.after(3000, self.change_background)
     
     def start_application(self):
         """Inicia a aplicação"""
