@@ -29,51 +29,133 @@ DEFAULT_FONT_TITLE = ('DejaVu Sans', 32, 'bold')
 class MainApp:
     def __init__(self, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, carousel_time: int = 3):
         self.root = tk.Tk()
-        self.root.title("Aplicação Principal")
+        self.root.title("Sonare - Sistema de Detecção de Produtos")
+        
+        # Configurar ícone da aplicação
+        self.set_app_icon()
+        
         self.debug = debug
         self.conf = conf
         self.display_seconds = display_seconds
         self.carousel_time = carousel_time
+        
         # Maximizar janela (compatível com Linux e Windows)
         self.maximize_window()
         
         self.root.configure(bg='#2c3e50')
         
         self.setup_ui()
+    
+    def set_app_icon(self):
+        """Configura o ícone da aplicação para Windows e Linux"""
+        try:
+            # Tentar usar ícone do projeto
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            
+            if platform.system() == "Windows":
+                # Windows usa .ico
+                icon_path = os.path.join(project_root, "resources", "icon.ico")
+                if os.path.exists(icon_path):
+                    self.root.iconbitmap(icon_path)
+                else:
+                    # Fallback: tentar usar .png convertido
+                    icon_png = os.path.join(project_root, "resources", "icon.png")
+                    if os.path.exists(icon_png):
+                        icon_img = tk.PhotoImage(file=icon_png)
+                        self.root.iconphoto(True, icon_img)
+            else:
+                # Linux usa .png
+                icon_path = os.path.join(project_root, "resources", "icon.png")
+                if os.path.exists(icon_path):
+                    icon_img = tk.PhotoImage(file=icon_path)
+                    self.root.iconphoto(True, icon_img)
+        except Exception as e:
+            # Se falhar, continua sem ícone
+            print(f"Aviso: Não foi possível carregar ícone da aplicação: {e}")
 
     def maximize_window(self):
-        """Configura tela cheia sem barras"""
-        # Remover decorações da janela para tela cheia
-        self.root.overrideredirect(True)
+        """Configura janela fullscreen sem decorações mas visível no gerenciador"""
+        # Configurar WM_CLASS para aparecer como processo separado (Linux)
+        try:
+            self.root.tk.call('wm', 'class', self.root._w, 'Sonare')
+        except Exception:
+            pass
         
-        # Configurar tela cheia
-        self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
+        # Atualizar para obter dimensões corretas
+        self.root.update_idletasks()
         
-        # Configurar para ficar sempre no topo
+        # Obter dimensões da tela
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        if platform.system() == "Windows":
+            # Windows: usar overrideredirect para remover decorações
+            self.root.overrideredirect(True)
+            self.root.geometry(f"{screen_width}x{screen_height}+0+0")
+            self.root.update_idletasks()
+        else:
+            # Linux: usar attributes para remover decorações mantendo gerenciamento
+            self.root.geometry(f"{screen_width}x{screen_height}+0+0")
+            try:
+                self.root.attributes('-type', 'splash')
+            except:
+                # Fallback se -type não funcionar
+                self.root.overrideredirect(True)
+        
+        # Forçar atualização da geometria
+        self.root.update()
+        
+        # Elevar janela ao topo
+        self.root.lift()
         self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
         
-        # Configurar cursor
-        self.root.configure(cursor='hand2')
+        # Dar foco para a janela
+        self.root.focus_force()
     
     def setup_ui(self):
         """Configura a interface inicial"""
+        # Definir background escuro imediatamente
+        self.root.configure(bg='#1a1a1a')
+        
         # Canvas para sobrepor elementos
         self.canvas = Canvas(
             self.root,
             highlightthickness=0,
-            bg='#2c3e50'  # Background temporário
+            bg='#1a1a1a'  # Background escuro
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
+        # Mostrar loading enquanto carrega assets
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        self.loading_text = self.canvas.create_text(
+            screen_width // 2, 
+            screen_height // 2,
+            text="Carregando...",
+            font=('DejaVu Sans', 48, 'bold'),
+            fill='white',
+            anchor='center'
+        )
+        
+        # Forçar atualização para mostrar o loading
+        self.root.update()
+        
         # Carregar e iniciar carrossel de backgrounds
         self.load_carousel_backgrounds()
+        
+        # Remover texto de loading
+        if hasattr(self, 'loading_text'):
+            self.canvas.delete(self.loading_text)
         
         # Adicionar primeira imagem como background se carregada
         if hasattr(self, 'background_images') and self.background_images:
             self.background_item = self.canvas.create_image(0, 0, image=self.background_images[0], anchor='nw')
             print("Primeira imagem carregada como background!")
         else:
-            print("Nenhuma imagem carregada, usando background azul")
+            print("Nenhuma imagem carregada, usando background escuro")
         
         # Relógio no canto superior esquerdo (estilo da imagem)
         self.clock_label = self.canvas.create_text(
