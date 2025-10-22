@@ -31,9 +31,6 @@ class MainApp:
         self.root = tk.Tk()
         self.root.title("Sonare - Sistema de Detecção de Produtos")
         
-        # Configurar ícone da aplicação
-        self.set_app_icon()
-        
         self.debug = debug
         self.conf = conf
         self.display_seconds = display_seconds
@@ -45,34 +42,6 @@ class MainApp:
         self.root.configure(bg='#2c3e50')
         
         self.setup_ui()
-    
-    def set_app_icon(self):
-        """Configura o ícone da aplicação para Windows e Linux"""
-        try:
-            # Tentar usar ícone do projeto
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(current_dir)
-            
-            if platform.system() == "Windows":
-                # Windows usa .ico
-                icon_path = os.path.join(project_root, "resources", "icon.ico")
-                if os.path.exists(icon_path):
-                    self.root.iconbitmap(icon_path)
-                else:
-                    # Fallback: tentar usar .png convertido
-                    icon_png = os.path.join(project_root, "resources", "icon.png")
-                    if os.path.exists(icon_png):
-                        icon_img = tk.PhotoImage(file=icon_png)
-                        self.root.iconphoto(True, icon_img)
-            else:
-                # Linux usa .png
-                icon_path = os.path.join(project_root, "resources", "icon.png")
-                if os.path.exists(icon_path):
-                    icon_img = tk.PhotoImage(file=icon_path)
-                    self.root.iconphoto(True, icon_img)
-        except Exception as e:
-            # Se falhar, continua sem ícone
-            print(f"Aviso: Não foi possível carregar ícone da aplicação: {e}")
 
     def maximize_window(self):
         """Configura janela fullscreen sem decorações mas visível no gerenciador"""
