@@ -1,68 +1,75 @@
 {
   "0": {
-    "name": "Atum em Lata",
-    "price": "R$ 7,00",
-    "img_path": "resources/images/atum.png",
-    "tts": "Atum em lata, sete reais"
+    "name": "Coca-Cola 2L",
+    "price": "R$ 9,00",
+    "img_path": "resources/images/cocacola-2litros.png",
+    "tts": "Coca-Cola, nove reais"
   },
   "1": {
-    "name": "Bolo de Caixa",
-    "price": "R$ 12,00",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Bolo de caixa, doze reais"
+    "name": "Fanta Laranja 2L",
+    "price": "R$ 9,00",
+    "img_path": "resources/images/fanta-laranja.jpg",
+    "tts": "Fanta laranja, nove reais"
   },
   "2": {
-    "name": "Café",
-    "price": "R$ 8,00",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Café, oito reais"
+    "name": "Feijão Carioca Kicaldo 1kg",
+    "price": "R$ 3,00",
+    "img_path": "resources/images/Kicaldo-feijaocarioca.png",
+    "tts": "Feijão carioca kicaldo, três reais"
   },
   "3": {
-    "name": "Chá",
-    "price": "R$ 6,00",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Chá, seis reais"
+    "name": "Feijão Fradinho Kicaldo 1kg",
+    "price": "R$ 3,50",
+    "img_path": "resources/images/Kicaldo-fradinho-1.png",
+    "tts": "Feijão fradinho kicaldo, três reais e cinquenta"
   },
   "4": {
-    "name": "Geleia",
-    "price": "R$ 9,00",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Geleia, nove reais"
+    "name": "Feijão Preto Kicaldo 1kg",
+    "price": "R$ 3,50",
+    "img_path": "resources/images/Kicaldo-feijaopreto.png",
+    "tts": "Feijão preto kicaldo, três reais e cinquenta"
   },
   "5": {
-    "name": "Leite de Caixa",
-    "price": "R$ 5,50",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Leite de caixa, cinco reais e cinquenta"
+    "name": "Leite Condensado Moça",
+    "price": "R$ 6,00",
+    "img_path": "resources/images/Leite-Condensado-Semidesnatado-Moca-Caixa-395g.png",
+    "tts": "Leite condensado moça, seis reais"
   },
   "6": {
-    "name": "Macarrão",
-    "price": "R$ 4,50",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Macarrão, quatro reais e cinquenta"
+    "name": "Leite Italac 1L",
+    "price": "R$ 7,00",
+    "img_path": "resources/images/leite-italac.png",
+    "tts": "Leite italac 1 Litro, sete reais"
   },
   "7": {
-    "name": "Molho de Tomate",
-    "price": "R$ 4,00",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Molho de tomate, quatro reais"
+    "name": "Leite Piracanjuba 1L",
+    "price": "R$ 7,50",
+    "img_path": "resources/images/leite-piracanjuba.png",
+    "tts": "Leite Piracanjuba 1 Litro, sete reais e cinquenta"
   },
   "8": {
-    "name": "Óleo de Cozinha",
+    "name": "Macarrão Espaguete Maassas Paulista 500g",
     "price": "R$ 9,50",
-    "img_path": "resources/images/oleodecozinha2.png",
-    "tts": "Óleo de cozinha, nove reais e cinquenta"
+    "img_path": "resources/images/massa_paulista_semola_furadinho_500g.png",
+    "tts": "Macarrão espaguete maassas paulista 500 gramas, nove reais e cinquenta"
   },
   "9": {
-    "name": "Coca-Cola",
-    "price": "R$ 10,00",
-    "img_path": "resources/images/cocacola-2litros.png",
-    "tts": "Coca-Cola, dez reais"
+    "name": "Miojo de Tomate Turma da Monica 80g",
+    "price": "R$ 1,50",
+    "img_path": "resources/images/miojo-de-tomate.png",
+    "tts": "Miojo de tomate turma da monica, sete reais e cinquenta"
   },
   "10": {
-    "name": "Suco",
-    "price": "R$ 7,50",
-    "img_path": "resources/images/placeholder.jpg",
-    "tts": "Suco, sete reais e cinquenta"
+    "name": "Molho de tomate Pomarola",
+    "price": "R$ 4,50",
+    "img_path": "resources/images/Molho-de-Tomate-Tradicional-Pomarola-Caixa-520g.png",
+    "tts": "Molho de tomate pomarola, quatro reais e cinquenta"
+  },
+  "11": {
+    "name": "Oleo Concordia 900ml",
+    "price": "R$ 5,50",
+    "img_path": "resources/images/oleo-de-soja.png",
+    "tts": "Oleo concordia, cinco reais e cinquenta"
   }
+
 }

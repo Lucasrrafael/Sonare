@@ -46,17 +46,21 @@ class CameraScreen:
         self._detection_locked_until = 0.0
         
         self.create_camera_window()
+        
+        # Calcular caminho raiz do projeto
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        
         # Inicializar YOLODetector (usa mesmo modelo do main)
         try:
-            self.detector = YOLODetector(model_path="resources/best.pt", confidence_threshold=self.conf_threshold)
+            model_path = os.path.join(project_root, 'resources', 'best.pt')
+            self.detector = YOLODetector(model_path=model_path, confidence_threshold=self.conf_threshold)
         except Exception as e:
             print(f"Erro ao carregar modelo YOLO: {str(e)}")
             self.detector = None
         
         # Carregar produtos para mapear class_id -> produto
         try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(current_dir)
             products_path = os.path.join(project_root, 'resources', 'products', 'products.json')
             with open(products_path, 'r') as f:
                 self.products_data = json.load(f)
@@ -331,12 +335,24 @@ class CameraScreen:
         self.start_camera()
     
     def start_camera(self):
-        """Inicia a câmera"""
+        """Inicia a câmera (prioritariamente webcam externa)"""
         try:
-            self.cap = cv2.VideoCapture(0)
+            # Tentar webcam externa primeiro (índice 1)
+            print("Tentando abrir webcam externa (índice 1)...")
+            self.cap = cv2.VideoCapture(1)
+            
+            # Se não conseguir abrir ou não estiver disponível, tentar câmera integrada
             if not self.cap.isOpened():
-                self.video_label.config(text="Erro: Não foi possível acessar a câmera")
-                return
+                print("Webcam externa não encontrada. Tentando câmera integrada (índice 0)...")
+                self.cap = cv2.VideoCapture(0)
+                
+                if not self.cap.isOpened():
+                    self.video_label.config(text="Erro: Nenhuma câmera encontrada")
+                    return
+                else:
+                    print("Usando câmera integrada do notebook")
+            else:
+                print("Usando webcam externa")
             
             self.camera_active = True
             self.video_thread = threading.Thread(target=self.video_loop, daemon=True)
@@ -533,6 +549,12 @@ class CameraScreen:
         # Carregar e redimensionar imagem do produto
         try:
             img_path = product['img_path']
+            # Usar caminho absoluto baseado na raiz do projeto
+            if not os.path.isabs(img_path):
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(current_dir)
+                img_path = os.path.join(project_root, img_path)
+            
             if os.path.exists(img_path):
                 # Carregar imagem
                 product_img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
