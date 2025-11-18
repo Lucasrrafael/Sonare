@@ -27,7 +27,7 @@ DEFAULT_FONT_LARGE_BOLD = ('DejaVu Sans', 16, 'bold')
 DEFAULT_FONT_TITLE = ('DejaVu Sans', 32, 'bold')
 
 class MainApp:
-    def __init__(self, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, carousel_time: int = 3):
+    def __init__(self, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, carousel_time: int = 3, model_path: str = None):
         self.root = tk.Tk()
         self.root.title("Sonare - Sistema de Detecção de Produtos")
         
@@ -35,6 +35,7 @@ class MainApp:
         self.conf = conf
         self.display_seconds = display_seconds
         self.carousel_time = carousel_time
+        self.model_path = model_path
         
         # Maximizar janela (compatível com Linux e Windows)
         self.maximize_window()
@@ -230,7 +231,7 @@ class MainApp:
         """Inicia a aplicação"""
         print("Iniciando câmera...")
         # Abrir tela da câmera
-        camera_screen = CameraScreen(self.root, debug=self.debug, conf=self.conf, display_seconds=self.display_seconds)
+        camera_screen = CameraScreen(self.root, debug=self.debug, conf=self.conf, display_seconds=self.display_seconds, model_path=self.model_path)
     
     def return_to_main(self):
         """Volta para a tela principal"""
@@ -261,10 +262,13 @@ def main():
     parser.add_argument("-c", "--conf", type=float, default=0.85, help="Threshold de confiança YOLO (0.0 a 1.0)")
     parser.add_argument("-d", "--display-seconds", type=float, default=6.0, help="Duração (s) que cada produto permanece na tela")
     parser.add_argument("-t", "--carousel-time", type=int, default=3, help="Duração (s) de cada imagem no carrossel")
+    parser.add_argument("-m", "--model", type=str, default=None, 
+                        help="Caminho para o modelo (.pt para PyTorch, .tflite para TensorFlow Lite). Se não especificado, usa TFLite por padrão")
     args = parser.parse_args()
 
     print("Iniciando aplicação...")
-    app = MainApp(debug=args.debug, conf=args.conf, display_seconds=args.display_seconds, carousel_time=args.carousel_time)
+    app = MainApp(debug=args.debug, conf=args.conf, display_seconds=args.display_seconds, 
+                  carousel_time=args.carousel_time, model_path=args.model)
     app.run()
 
 if __name__ == "__main__":

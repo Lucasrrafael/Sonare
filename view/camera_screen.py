@@ -16,8 +16,7 @@ import soundfile as sf
 import platform
 import json
 from product_selector import ProductSelector
-from detection.detection import YOLODetector
-from detection.detection import get_object_info
+from detection.detection import load_detector, get_object_info
 
 # Definir fonte padrão que suporta acentos
 DEFAULT_FONT = ('DejaVu Sans', 10)
@@ -27,7 +26,7 @@ DEFAULT_FONT_LARGE_BOLD = ('DejaVu Sans', 16, 'bold')
 DEFAULT_FONT_TITLE = ('DejaVu Sans', 24, 'bold')
 
 class CameraScreen:
-    def __init__(self, parent_window, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0):
+    def __init__(self, parent_window, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, model_path: str = None):
         self.parent = parent_window
         self.cap = None
         self.camera_active = False
@@ -51,12 +50,16 @@ class CameraScreen:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(current_dir)
         
-        # Inicializar YOLODetector (usa mesmo modelo do main)
+        # Ajustar model_path se fornecido e for relativo
+        if model_path and not os.path.isabs(model_path):
+            model_path = os.path.join(project_root, model_path)
+        # Se model_path for None, load_detector usará caminhos relativos à raiz do projeto
+        
+        # Inicializar detector (escolhe automaticamente OpenVINO/TensorRT baseado em GPU)
         try:
-            model_path = os.path.join(project_root, 'resources', 'best.pt')
-            self.detector = YOLODetector(model_path=model_path, confidence_threshold=self.conf_threshold)
+            self.detector = load_detector(model_path=model_path, confidence_threshold=self.conf_threshold)
         except Exception as e:
-            print(f"Erro ao carregar modelo YOLO: {str(e)}")
+            print(f"Erro ao carregar modelo: {str(e)}")
             self.detector = None
         
         # Carregar produtos para mapear class_id -> produto
