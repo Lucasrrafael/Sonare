@@ -25,7 +25,7 @@ def get_products():
     products_path = os.path.join(project_root, 'resources', 'products', 'products.json')
     
     try:
-        with open(products_path, 'r') as file:
+        with open(products_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             # Se for dict indexado por class_id, converter para lista ordenada
             if isinstance(data, dict):

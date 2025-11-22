@@ -4,7 +4,7 @@ Tela da câmera com OpenCV
 
 import tkinter as tk
 import cv2
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 import threading
 import time
 import os
@@ -65,7 +65,7 @@ class CameraScreen:
         # Carregar produtos para mapear class_id -> produto
         try:
             products_path = os.path.join(project_root, 'resources', 'products', 'products.json')
-            with open(products_path, 'r') as f:
+            with open(products_path, 'r', encoding='utf-8') as f:
                 self.products_data = json.load(f)
         except Exception as e:
             print(f"Erro ao carregar products.json: {str(e)}")
@@ -224,36 +224,6 @@ class CameraScreen:
         buttons_frame = tk.Frame(self.camera_window, bg='#2c3e50')
         buttons_frame.place(relx=0.5, rely=0.95, anchor='center')
         
-        # Botão Parar
-        self.stop_button = tk.Button(
-            buttons_frame,
-            text="PARAR CÂMERA",
-            font=DEFAULT_FONT_LARGE_BOLD,
-            bg='#e74c3c',
-            fg='white',
-            padx=30,
-            pady=10,
-            command=self.stop_camera,
-            relief='flat',
-            cursor='hand2'
-        )
-        self.stop_button.pack(side='left', padx=10)
-        
-        # Botão Selecionar Produto
-        self.select_product_button = tk.Button(
-            buttons_frame,
-            text="SELECIONAR PRODUTO",
-            font=DEFAULT_FONT_LARGE_BOLD,
-            bg='#3498db',
-            fg='white',
-            padx=30,
-            pady=10,
-            command=self.open_product_selector,
-            relief='flat',
-            cursor='hand2'
-        )
-        self.select_product_button.pack(side='left', padx=10)
-        
         # Botão Fechar
         self.close_button = tk.Button(
             buttons_frame,
@@ -340,22 +310,42 @@ class CameraScreen:
     def start_camera(self):
         """Inicia a câmera (prioritariamente webcam externa)"""
         try:
+            # No Windows, usar DirectShow para abertura mais rápida
+            use_dshow = platform.system() == "Windows"
+            
             # Tentar webcam externa primeiro (índice 1)
             print("Tentando abrir webcam externa (índice 1)...")
-            self.cap = cv2.VideoCapture(1)
+            if use_dshow:
+                self.cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+            else:
+                self.cap = cv2.VideoCapture(1)
             
-            # Se não conseguir abrir ou não estiver disponível, tentar câmera integrada
-            if not self.cap.isOpened():
+            # Verificar rapidamente se a câmera está disponível
+            if self.cap.isOpened():
+                # Testar se consegue ler um frame
+                ret, _ = self.cap.read()
+                if ret:
+                    print("Usando webcam externa")
+                else:
+                    print("Webcam externa não funcional, tentando câmera integrada...")
+                    self.cap.release()
+                    if use_dshow:
+                        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    else:
+                        self.cap = cv2.VideoCapture(0)
+            else:
                 print("Webcam externa não encontrada. Tentando câmera integrada (índice 0)...")
-                self.cap = cv2.VideoCapture(0)
+                self.cap.release()
+                if use_dshow:
+                    self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                else:
+                    self.cap = cv2.VideoCapture(0)
                 
                 if not self.cap.isOpened():
                     self.video_label.config(text="Erro: Nenhuma câmera encontrada")
                     return
                 else:
                     print("Usando câmera integrada do notebook")
-            else:
-                print("Usando webcam externa")
             
             self.camera_active = True
             self.video_thread = threading.Thread(target=self.video_loop, daemon=True)
@@ -618,35 +608,59 @@ class CameraScreen:
         except Exception as e:
             print(f"Erro ao carregar imagem: {str(e)}")
         
-        # Adicionar texto do nome do produto
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.5  # Aumentado de 1.0 para 1.5
-        color = (255, 255, 255)  # Branco
-        thickness = 3  # Aumentado de 2 para 3
+        # Converter frame para PIL para desenhar texto com suporte a Unicode
+        frame_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(frame_pil)
+        
+        # Carregar fonte com suporte a Unicode
+        try:
+            # Tentar carregar fonte DejaVu Sans do projeto
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            font_path = os.path.join(project_root, 'resources', 'fonts', 'dejavu-sans.bold.ttf')
+            font_name = ImageFont.truetype(font_path, 48)  # Reduzido de 60 para 48
+            font_price = ImageFont.truetype(font_path, 42)  # Reduzido de 50 para 42
+        except Exception as e:
+            print(f"Erro ao carregar fonte DejaVu: {e}")
+            # Fallback para fonte padrão
+            try:
+                font_name = ImageFont.truetype("arial.ttf", 48)
+                font_price = ImageFont.truetype("arial.ttf", 42)
+            except:
+                font_name = ImageFont.load_default()
+                font_price = ImageFont.load_default()
         
         # Nome do produto (muito mais acima)
-        text_size = cv2.getTextSize(product['name'], font, font_scale, thickness)[0]
-        text_x = center_x - text_size[0] // 2
-        text_y = center_y - 250  # Movido muito mais para cima
+        name_text = str(product['name'])  # Garantir que é string
+        # Debug: imprimir caracteres para verificar encoding
+        if 'Macarrão' in name_text or 'ã' in name_text:
+            print(f"DEBUG - Nome do produto: {name_text}")
+            print(f"DEBUG - Bytes: {name_text.encode('utf-8')}")
         
-        # Adicionar sombra preta para melhor legibilidade
-        cv2.putText(frame, product['name'], (text_x + 3, text_y + 3), 
-                   font, font_scale, (0, 0, 0), thickness + 2)
-        cv2.putText(frame, product['name'], (text_x, text_y), 
-                   font, font_scale, color, thickness)
+        name_bbox = draw.textbbox((0, 0), name_text, font=font_name)
+        name_width = name_bbox[2] - name_bbox[0]
+        name_x = center_x - name_width // 2
+        name_y = center_y - 250
+        
+        # Desenhar sombra preta para o nome
+        draw.text((name_x + 3, name_y + 3), name_text, font=font_name, fill=(0, 0, 0))
+        # Desenhar nome em branco
+        draw.text((name_x, name_y), name_text, font=font_name, fill=(255, 255, 255))
         
         # Preço do produto (mais próximo do nome)
-        price_color = (0, 165, 255)  # Laranja em BGR
         price_text = product['price']
-        price_size = cv2.getTextSize(price_text, font, font_scale * 0.9, thickness)[0]
-        price_x = center_x - price_size[0] // 2
-        price_y = center_y - 200  # Mais próximo do nome
+        price_bbox = draw.textbbox((0, 0), price_text, font=font_price)
+        price_width = price_bbox[2] - price_bbox[0]
+        price_x = center_x - price_width // 2
+        price_y = center_y - 180
         
-        # Adicionar sombra preta para melhor legibilidade
-        cv2.putText(frame, price_text, (price_x + 3, price_y + 3), 
-                   font, font_scale * 0.9, (0, 0, 0), thickness + 2)
-        cv2.putText(frame, price_text, (price_x, price_y), 
-                   font, font_scale * 0.9, price_color, thickness)
+        # Desenhar sombra preta para o preço
+        draw.text((price_x + 3, price_y + 3), price_text, font=font_price, fill=(0, 0, 0))
+        # Desenhar preço em laranja (RGB)
+        draw.text((price_x, price_y), price_text, font=font_price, fill=(255, 165, 0))
+        
+        # Converter de volta para OpenCV
+        frame = cv2.cvtColor(np.array(frame_pil), cv2.COLOR_RGB2BGR)
         
         return frame
     

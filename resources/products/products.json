@@ -48,16 +48,16 @@
     "tts": "Leite Piracanjuba 1 Litro, sete reais e cinquenta"
   },
   "8": {
-    "name": "Macarrão Espaguete Maassas Paulista 500g",
+    "name": "Macarrão Espaguete Massas Paulista 500g",
     "price": "R$ 9,50",
     "img_path": "resources/images/massa_paulista_semola_furadinho_500g.png",
-    "tts": "Macarrão espaguete maassas paulista 500 gramas, nove reais e cinquenta"
+    "tts": "Macarrão espaguete massas paulista 500 gramas, nove reais e cinquenta"
   },
   "9": {
     "name": "Miojo de Tomate Turma da Monica 80g",
     "price": "R$ 1,50",
     "img_path": "resources/images/miojo-de-tomate.png",
-    "tts": "Miojo de tomate turma da monica, sete reais e cinquenta"
+    "tts": "Miojo de tomate turma da monica, um real e cinquenta"
   },
   "10": {
     "name": "Molho de tomate Pomarola",
@@ -69,7 +69,7 @@
     "name": "Oleo Concordia 900ml",
     "price": "R$ 5,50",
     "img_path": "resources/images/oleo-de-soja.png",
-    "tts": "Oleo concordia, cinco reais e cinquenta"
+    "tts": "Óleo concordia, cinco reais e cinquenta"
   }
 
 }
