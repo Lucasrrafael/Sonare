@@ -27,7 +27,7 @@ DEFAULT_FONT_LARGE_BOLD = ('DejaVu Sans', 16, 'bold')
 DEFAULT_FONT_TITLE = ('DejaVu Sans', 32, 'bold')
 
 class MainApp:
-    def __init__(self, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, carousel_time: int = 3, model_path: str = None):
+    def __init__(self, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, carousel_time: int = 3, model_path: str = None, speech_speed: float = 1.3):
         self.root = tk.Tk()
         self.root.title("Sonare - Sistema de Detecção de Produtos")
         
@@ -36,6 +36,7 @@ class MainApp:
         self.display_seconds = display_seconds
         self.carousel_time = carousel_time
         self.model_path = model_path
+        self.speech_speed = speech_speed
         
         # Maximizar janela (compatível com Linux e Windows)
         self.maximize_window()
@@ -139,10 +140,10 @@ class MainApp:
         # Configurar clique em qualquer lugar para iniciar
         self.canvas.bind('<Button-1>', lambda e: self.start_application())
         
-        # Configurar teclas para sair
-        self.root.bind('<Escape>', lambda e: self.quit_application())
-        self.root.bind('<F4>', lambda e: self.quit_application())
-        self.root.bind('<F12>', lambda e: self.quit_application())
+        # Configurar teclas
+        # Q ou q: fecha a aplicação
+        self.root.bind('<q>', lambda e: self.quit_application())
+        self.root.bind('<Q>', lambda e: self.quit_application())
         
         # Iniciar atualização do relógio
         self.update_clock()
@@ -231,7 +232,7 @@ class MainApp:
         """Inicia a aplicação"""
         print("Iniciando câmera...")
         # Abrir tela da câmera
-        camera_screen = CameraScreen(self.root, debug=self.debug, conf=self.conf, display_seconds=self.display_seconds, model_path=self.model_path)
+        camera_screen = CameraScreen(self.root, debug=self.debug, conf=self.conf, display_seconds=self.display_seconds, model_path=self.model_path, speech_speed=self.speech_speed)
     
     def return_to_main(self):
         """Volta para a tela principal"""
@@ -264,11 +265,13 @@ def main():
     parser.add_argument("-t", "--carousel-time", type=int, default=3, help="Duração (s) de cada imagem no carrossel")
     parser.add_argument("-m", "--model", type=str, default=None, 
                         help="Caminho para o modelo (.pt para PyTorch, .tflite para TensorFlow Lite). Se não especificado, usa TFLite por padrão")
+    parser.add_argument("-s", "--speech-speed", type=float, default=1.3, 
+                        help="Velocidade da fala (1.0 = normal, 1.3 = 30%% mais rápido)")
     args = parser.parse_args()
 
     print("Iniciando aplicação...")
     app = MainApp(debug=args.debug, conf=args.conf, display_seconds=args.display_seconds, 
-                  carousel_time=args.carousel_time, model_path=args.model)
+                  carousel_time=args.carousel_time, model_path=args.model, speech_speed=args.speech_speed)
     app.run()
 
 if __name__ == "__main__":

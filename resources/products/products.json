@@ -13,21 +13,21 @@
   },
   "2": {
     "name": "Feijão Carioca Kicaldo 1kg",
-    "price": "R$ 3,00",
+    "price": "R$ 7,00",
     "img_path": "resources/images/Kicaldo-feijaocarioca.png",
-    "tts": "Feijão carioca kicaldo, três reais"
+    "tts": "Feijão carioca kicaldo, sete reais"
   },
   "3": {
     "name": "Feijão Fradinho Kicaldo 1kg",
-    "price": "R$ 3,50",
+    "price": "R$ 7,50",
     "img_path": "resources/images/Kicaldo-fradinho-1.png",
-    "tts": "Feijão fradinho kicaldo, três reais e cinquenta"
+    "tts": "Feijão fradinho kicaldo, sete reais e cinquenta"
   },
   "4": {
     "name": "Feijão Preto Kicaldo 1kg",
-    "price": "R$ 3,50",
+    "price": "R$ 7,50",
     "img_path": "resources/images/Kicaldo-feijaopreto.png",
-    "tts": "Feijão preto kicaldo, três reais e cinquenta"
+    "tts": "Feijão preto kicaldo, sete reais e cinquenta"
   },
   "5": {
     "name": "Leite Condensado Moça",
@@ -49,9 +49,9 @@
   },
   "8": {
     "name": "Macarrão Espaguete Massas Paulista 500g",
-    "price": "R$ 9,50",
+    "price": "R$ 6,00",
     "img_path": "resources/images/massa_paulista_semola_furadinho_500g.png",
-    "tts": "Macarrão espaguete massas paulista 500 gramas, nove reais e cinquenta"
+    "tts": "Macarrão espaguete massas paulista 500 gramas, seis reais"
   },
   "9": {
     "name": "Miojo de Tomate Turma da Monica 80g",

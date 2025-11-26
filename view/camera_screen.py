@@ -26,7 +26,7 @@ DEFAULT_FONT_LARGE_BOLD = ('DejaVu Sans', 16, 'bold')
 DEFAULT_FONT_TITLE = ('DejaVu Sans', 24, 'bold')
 
 class CameraScreen:
-    def __init__(self, parent_window, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, model_path: str = None):
+    def __init__(self, parent_window, debug: bool = False, conf: float = 0.85, display_seconds: float = 6.0, model_path: str = None, speech_speed: float = 1.3):
         self.parent = parent_window
         self.cap = None
         self.camera_active = False
@@ -38,11 +38,30 @@ class CameraScreen:
         # Inicializar pygame para reprodução de áudio
         pygame.mixer.init()
         self.is_playing_audio = False
-        self.speech_speed = 1.3  # Velocidade da fala (1.0 = normal, 1.3 = 30% mais rápido)
+        self.speech_speed = float(speech_speed)  # Velocidade da fala (1.0 = normal, 1.3 = 30% mais rápido)
         self.debug_mode = bool(debug)  # Modo debug para desenhar bounding boxes
         self.conf_threshold = float(conf)
         self.display_seconds = max(0.5, float(display_seconds))
         self._detection_locked_until = 0.0
+        
+        # Thresholds customizados por classe (sobrescrevem o threshold básico)
+        # Baseado no mapeamento do products.json:
+        # ID 0: Coca-Cola, ID 1: Fanta, ID 2: Feijão Carioca, ID 3: Feijão Fradinho
+        # ID 4: Feijão Preto, ID 5: Leite Condensado, ID 6: Leite Italac, ID 7: Leite Piracanjuba
+        # ID 8: Macarrão, ID 9: Miojo (filtrado), ID 10: Pomarola, ID 11: Óleo
+        self.class_thresholds = {
+            0: 0.81,   # Coca-Cola
+            1: 0.84,   # Fanta
+            2: 0.65,   # Feijão Carioca
+            3: 0.71,   # Feijão Fradinho
+            4: 0.80,   # Feijão Preto
+            5: 0.82,   # Leite Condensado
+            6: 0.87,   # Leite Italac
+            7: 0.72,   # Leite Piracanjuba
+            8: 0.80,   # Macarrão
+            10: 0.86,  # Pomarola
+            11: 0.84   # Óleo
+        }
         
         self.create_camera_window()
         
@@ -71,15 +90,29 @@ class CameraScreen:
             print(f"Erro ao carregar products.json: {str(e)}")
             self.products_data = []
     
-    def set_speech_speed(self, speed):
-        """Define a velocidade da fala (1.0 = normal, 1.5 = 50% mais rápido, 0.8 = 20% mais lento)"""
-        self.speech_speed = max(0.5, min(2.0, speed))  # Limitar entre 0.5x e 2.0x
+    def passes_class_threshold(self, class_id, confidence):
+        """Verifica se a confiança passa no threshold customizado da classe.
         
-        # Atualizar display na interface
-        if hasattr(self, 'speed_display'):
-            self.speed_display.config(text=f"{self.speech_speed:.1f}x")
+        Args:
+            class_id: ID da classe detectada
+            confidence: Confiança da detecção (0.0 a 1.0)
+            
+        Returns:
+            bool: True se passa no threshold, False caso contrário
+        """
+        # Se a classe tem threshold customizado, usar ele
+        if class_id in self.class_thresholds:
+            threshold = self.class_thresholds[class_id]
+            passes = confidence >= threshold
+            if not passes:
+                print(f"[THRESHOLD] Classe {class_id} rejeitada: conf={confidence:.3f} < threshold={threshold:.3f}")
+            return passes
         
-        print(f"Velocidade da fala ajustada para: {self.speech_speed}x")
+        # Caso contrário, usar threshold básico
+        passes = confidence >= self.conf_threshold
+        if not passes:
+            print(f"[THRESHOLD] Classe {class_id} rejeitada: conf={confidence:.3f} < threshold básico={self.conf_threshold:.3f}")
+        return passes
     
     def speak_text(self, text):
         """Reproduz o texto em áudio usando gTTS e pygame"""
@@ -242,67 +275,16 @@ class CameraScreen:
         # Botão Debug
         # Modo debug controlado apenas por parâmetro de linha de comando
         
-        # Frame para controles de velocidade
-        speed_frame = tk.Frame(self.camera_window, bg='#2c3e50')
-        speed_frame.place(relx=0.02, rely=0.95, anchor='w')
-        
-        # Label de velocidade
-        speed_label = tk.Label(
-            speed_frame,
-            text="Velocidade:",
-            font=DEFAULT_FONT_BOLD,
-            fg='white',
-            bg='#2c3e50'
-        )
-        speed_label.pack(side='left', padx=5)
-        
-        # Botão mais lento
-        self.slower_button = tk.Button(
-            speed_frame,
-            text="-",
-            font=DEFAULT_FONT_LARGE_BOLD,
-            bg='#e67e22',
-            fg='white',
-            width=3,
-            height=1,
-            command=lambda: self.set_speech_speed(self.speech_speed - 0.1),
-            relief='flat',
-            cursor='hand2'
-        )
-        self.slower_button.pack(side='left', padx=2)
-        
-        # Label da velocidade atual
-        self.speed_display = tk.Label(
-            speed_frame,
-            text=f"{self.speech_speed:.1f}x",
-            font=DEFAULT_FONT_BOLD,
-            fg='#f39c12',
-            bg='#2c3e50'
-        )
-        self.speed_display.pack(side='left', padx=5)
-        
-        # Botão mais rápido
-        self.faster_button = tk.Button(
-            speed_frame,
-            text="+",
-            font=DEFAULT_FONT_LARGE_BOLD,
-            bg='#e67e22',
-            fg='white',
-            width=3,
-            height=1,
-            command=lambda: self.set_speech_speed(self.speech_speed + 0.1),
-            relief='flat',
-            cursor='hand2'
-        )
-        self.faster_button.pack(side='left', padx=2)
-        
         # Configurar fechamento da janela
         self.camera_window.protocol("WM_DELETE_WINDOW", self.close_camera)
         
-        # Configurar teclas para voltar à tela inicial
+        # Configurar teclas
+        # ESC: fecha apenas a janela da câmera e volta à tela principal
         self.camera_window.bind('<Escape>', lambda e: self.close_camera())
-        self.camera_window.bind('<F4>', lambda e: self.close_camera())
-        self.camera_window.bind('<F12>', lambda e: self.close_camera())
+        
+        # Q ou q: fecha a aplicação inteira
+        self.camera_window.bind('<q>', lambda e: self.quit_application())
+        self.camera_window.bind('<Q>', lambda e: self.quit_application())
         
         # Iniciar câmera automaticamente
         self.start_camera()
@@ -425,6 +407,9 @@ class CameraScreen:
         if not self.debug_mode or not hasattr(self, 'detector') or self.detector is None:
             return frame
         try:
+            height, width = frame.shape[:2]
+            frame_area = height * width
+            
             detections = self.detector.detect_objects(frame)
             for det in detections:
                 bbox = det['bbox']
@@ -435,10 +420,29 @@ class CameraScreen:
                 conf = float(det['confidence'])
                 class_id = det['class_id']
 
+                # Filtrar classe 9 (Miojo)
+                if class_id == 9:
+                    print(f"[DEBUG] Classe 9 (Miojo) filtrada - ignorada")
+                    continue
+                
+                # Verificar threshold customizado da classe
+                if not self.passes_class_threshold(class_id, conf):
+                    continue
+
+                # Calcular área da bbox
+                bbox_width = x2 - x1
+                bbox_height = y2 - y1
+                bbox_area = bbox_width * bbox_height
+                
+                # Filtrar bboxes que ocupam mais de 85% da tela
+                if bbox_area > 0.85 * frame_area:
+                    print(f"[DEBUG] Bbox filtrada: {bbox_area / frame_area * 100:.1f}% da tela")
+                    continue
+
                 # Box
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-                # Label com nome do produto, se disponível
+                # Label com nome do produto e confiança
                 product_name = None
                 try:
                     prod = None
@@ -451,7 +455,10 @@ class CameraScreen:
                 except Exception:
                     product_name = None
 
-                label = product_name if product_name else f"ID {class_id}"
+                # Criar label com nome (ou ID) e confiança
+                base_label = product_name if product_name else f"ID {class_id}"
+                label = f"{base_label} {conf:.2f}"
+                
                 (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
                 y_text = max(y1 - 10, th + 5)
                 cv2.rectangle(frame, (x1, y_text - th - 4), (x1 + tw + 4, y_text + 4), (0, 255, 0), -1)
@@ -461,7 +468,7 @@ class CameraScreen:
         return frame
     
     def detect_and_show_product(self, frame):
-        """Executa a detecção e exibe o produto correspondente na UI atual."""
+        """Executa a detecção e exibe o produto na UI."""
         if not hasattr(self, 'detector') or self.detector is None:
             return frame
         try:
@@ -469,23 +476,62 @@ class CameraScreen:
             if time.time() < self._detection_locked_until:
                 return frame
 
-            # Executar detecção uma vez para usar tanto no mapeamento quanto fallback
+            # Executar detecção
             detections = self.detector.detect_objects(frame)
+            # DEBUG: quantidade de detecções por frame
+            print(f"[DETECT] {len(detections)} detecções neste frame")
             if not detections:
-                return frame  # sem logs em caso de ausência de detecções
+                return frame
 
-            # Tentar obter produto via utilitário (suporta dict/list)
-            product_info = get_object_info(frame, self.detector, self.products_data)
+            # Filtrar bboxes que ocupam mais de 85% da tela e classe 9 (Miojo)
+            height, width = frame.shape[:2]
+            frame_area = height * width
+            filtered_detections = []
+            
+            for det in detections:
+                class_id = int(det.get('class_id', -1))
+                conf = float(det.get('confidence', 0.0))
+                
+                # Filtrar classe 9 (Miojo)
+                if class_id == 9:
+                    print(f"[DETECT] Classe 9 (Miojo) filtrada - ignorada")
+                    continue
+                
+                # Verificar threshold customizado da classe
+                if not self.passes_class_threshold(class_id, conf):
+                    continue
+                
+                bbox = det.get('bbox', [])
+                if len(bbox) >= 4:
+                    if hasattr(bbox, 'astype'):
+                        x1, y1, x2, y2 = bbox.astype(int)
+                    else:
+                        x1, y1, x2, y2 = map(int, bbox)
+                    
+                    bbox_width = x2 - x1
+                    bbox_height = y2 - y1
+                    bbox_area = bbox_width * bbox_height
+                    
+                    # Filtrar se maior que 85% da tela
+                    if bbox_area <= 0.85 * frame_area:
+                        filtered_detections.append(det)
+                    else:
+                        print(f"[DETECT] Bbox filtrada: {bbox_area / frame_area * 100:.1f}% da tela")
+            
+            if not filtered_detections:
+                print(f"[DETECT] Todas as {len(detections)} detecções foram filtradas")
+                return frame
+            
+            # Pegar a maior detecção do frame atual (após filtro)
+            largest = max(filtered_detections, key=lambda d: d.get('area', 0))
+            class_id = int(largest.get('class_id', -1))
 
-            # Fallback: se não encontrar no JSON, usar class_id da maior detecção
-            if not product_info:
-                # maior bounding box
-                largest = max(detections, key=lambda d: d.get('area', 0))
-                class_id = int(largest.get('class_id', -1))
-                if isinstance(self.products_data, dict):
-                    product_info = self.products_data.get(class_id) or self.products_data.get(str(class_id))
-                elif isinstance(self.products_data, list) and 0 <= class_id < len(self.products_data):
-                    product_info = self.products_data[class_id]
+            # Mapear class_id para produto no JSON
+            product_info = None
+            if isinstance(self.products_data, dict):
+                product_info = self.products_data.get(class_id) or self.products_data.get(str(class_id))
+            elif isinstance(self.products_data, list) and 0 <= class_id < len(self.products_data):
+                product_info = self.products_data[class_id]
 
             if product_info:
                 # Evitar repetição se o mesmo produto já está exibido
@@ -688,6 +734,24 @@ class CameraScreen:
         else:
             # Fallback: apenas fechar a janela
             self.camera_window.destroy()
+    
+    def quit_application(self):
+        """Fecha a aplicação inteira"""
+        print("Fechando aplicação...")
+        self.stop_camera()
+        
+        # Parar qualquer áudio que esteja sendo reproduzido
+        try:
+            pygame.mixer.music.stop()
+            self.is_playing_audio = False
+        except:
+            pass
+        
+        # Fechar a aplicação completamente
+        if hasattr(self.parent, 'quit'):
+            self.parent.quit()
+        if hasattr(self.parent, 'destroy'):
+            self.parent.destroy()
     
     def __del__(self):
         """Destrutor"""
